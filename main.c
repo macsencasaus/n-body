@@ -6,11 +6,11 @@
 
 #include "vec.h"
 
-#define ENTITIES_SIZE 4
-#define G 25.f
-#define EPS 100.f
+#define ENTITIES_SIZE 400
+#define G 250.f
+#define EPS 300.f
 
-#define SIMULATION_DELTA (1.0 / 60.0)
+#define SIMULATION_DELTA (1.0 / 120.0)
 
 double get_current_time(void) { return (double)clock() / CLOCKS_PER_SEC; }
 
@@ -42,7 +42,10 @@ const int window_height = 1400;
 
 static int SDL_RenderFillCircle(SDL_Renderer *renderer, entity *c);
 static vec2 gravity_acc(entity *c1, entity *c2);
-static void render_frame(SDL_Renderer *renderer, entity *entities);
+
+static inline void render_frame(SDL_Renderer *renderer, entity *entities);
+static inline vec2 rand_pos(void);
+static inline SDL_Color rand_color(void);
 
 int main(void) {
     scc(SDL_Init(SDL_INIT_VIDEO));
@@ -54,51 +57,24 @@ int main(void) {
     SDL_Renderer *renderer =
         scp(SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED));
 
-    int quarter_width = window_width / 4;
-
-    int mid_height = window_height / 2;
-
     /* struct timeval start, end; */
 
-    entities[0] = (entity){
-        .pos = (vec2){.x = 1 * quarter_width, .y = mid_height},
-        .d = (vec2){.y = .3f},
-        .radius = 20,
-        .mass = 1,
-        .color = (SDL_Color){255, 255, 255, 255},
-    };
-    entities[1] = (entity){
-        .pos = (vec2){.x = 3 * quarter_width, .y = mid_height},
-        .d = (vec2){.y = -.3f},
-        .radius = 20,
-        .mass = 1,
-        .color = (SDL_Color){0, 0, 255, 255},
-    };
-    entities[2] = (entity){
-        .pos = (vec2){.x = 2 * quarter_width, .y = mid_height - 100},
-        .radius = 20,
-        .mass = 5,
-        .color = (SDL_Color){255, 255, 255, 255},
-    };
-    entities[3] = (entity){
-        .pos = (vec2){.x = 2 * quarter_width, .y = mid_height + 300},
-        .radius = 20,
-        .mass = 1,
-        .color = (SDL_Color){0, 255, 255, 255},
-    };
-    /* entities[4] = (entity){ */
-    /*     .pos = (vec2){.x = 2 * quarter_width - 200, .y = mid_height + 300},
-     */
-    /*     .radius = 20, */
-    /*     .mass = 1, */
-    /*     .color = (SDL_Color){255, 0, 0, 255}, */
-    /* }; */
-    /* entities[5] = (entity){ */
-    /*     .pos = (vec2){.x = 2 * quarter_width + 100, .y = mid_height - 300},
-     */
-    /*     .radius = 20, */
-    /*     .mass = 1, */
-    /*     .color = (SDL_Color){255, 255, 255, 255}, */
+    for (size_t i = 0; i < ENTITIES_SIZE; ++i) {
+        entities[i] = (entity){
+            .pos = rand_pos(),
+            .radius = 5,
+            .mass = 1,
+            .color = rand_color(),
+        };
+    }
+
+    /* entities[0] = (entity){ */
+    /*     .pos = */
+    /*         (vec2){.x = (float)window_width / 2, .y = (float)window_height /
+     * 2}, */
+    /*     .radius = 50, */
+    /*     .mass = 1000, */
+    /*     .color = (SDL_Color){250, 0, 0, 255}, */
     /* }; */
 
     bool quit = false;
@@ -106,6 +82,7 @@ int main(void) {
     double lag = 0.f;
 
     while (!quit) {
+        /* if (count == 2) break; */
         double current_time = get_current_time();
         double elapsed = current_time - previous_time;
         previous_time = current_time;
@@ -138,6 +115,12 @@ int main(void) {
                 c->d = vec2_add(c->d, c->dd);
                 c->new_pos = vec2_add(c->pos, c->d);
             }
+
+            for (size_t i = 0; i < ENTITIES_SIZE; ++i) {
+                c = entities + i;
+                c->pos = c->new_pos;
+            }
+
             lag -= SIMULATION_DELTA;
         }
 
@@ -216,10 +199,24 @@ static inline void render_frame(SDL_Renderer *renderer, entity *entities) {
     entity *c;
     for (size_t i = 0; i < ENTITIES_SIZE; ++i) {
         c = entities + i;
-        c->pos = c->new_pos;
-        vec2_print(c->pos);
         scc(SDL_RenderFillCircle(renderer, c));
     }
 
     SDL_RenderPresent(renderer);
+}
+
+static inline vec2 rand_pos(void) {
+    return (vec2){
+        .x = ((float)rand() / RAND_MAX) * window_width,
+        .y = ((float)rand() / RAND_MAX) * window_height,
+    };
+}
+
+static inline SDL_Color rand_color(void) {
+    return (SDL_Color){
+        (float)rand() / RAND_MAX * 255,
+        (float)rand() / RAND_MAX * 255,
+        (float)rand() / RAND_MAX * 255,
+        255
+    };
 }
